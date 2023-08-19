@@ -37,6 +37,18 @@ function find_by_id($table, $id)
   }
 }
 /*--------------------------------------------------------------*/
+/*  Function for Find data from table by id
+/*--------------------------------------------------------------*/
+function find_by_email($email)
+{
+  global $db;
+  $sql = $db->query("SELECT id FROM users WHERE email='{$db->escape($email)}' LIMIT 1");
+  if ($result = $db->fetch_assoc($sql))
+    return $result;
+  else
+    return null;
+}
+/*--------------------------------------------------------------*/
 /* Function for Delete data from table by id
 /*--------------------------------------------------------------*/
 function delete_by_id($table, $id)
@@ -223,6 +235,11 @@ function page_require_level($require_level)
   endif;
 }
 
+/*--------------------------------------------------------------*/
+/* Function para saber si el user name existe en la tabla users
+/*--------------------------------------------------------------*/
+
+
 function find_username($val)
 {
   global $db;
@@ -231,6 +248,10 @@ function find_username($val)
   return ($db->num_rows($result) === 0 ? true : false);
 }
 
+
+/*--------------------------------------------------------------*/
+/* Function para saber si existe el email en la tabla users
+/*--------------------------------------------------------------*/
 function find_email($val)
 {
   global $db;
@@ -240,7 +261,9 @@ function find_email($val)
 }
 
 
-
+/*--------------------------------------------------------------*/
+/* Function buscar los usuarios por paginacion
+/*--------------------------------------------------------------*/
 function find_users_with_pagination($limit, $offset)
 {
   global $db;
@@ -252,10 +275,77 @@ function find_users_with_pagination($limit, $offset)
   return $result;
 }
 
+/*--------------------------------------------------------------*/
+/* Function remplazar imagen de perfil
+/*--------------------------------------------------------------*/
+
 function replace_image_profile($consulta)
 {
   global $db;
   $result = $db->query($consulta);
   return ($result && $db->affected_rows() === 1 ? true : false);
 }
+
+/*--------------------------------------------------------------*/
+/* Function crear token para recuperar contraseña
+/*--------------------------------------------------------------*/
+function recover_password($id, $token, $expiration)
+{
+  global $db;
+
+  // Insertar un nuevo registro en la tabla reset_pass
+  $query = "INSERT INTO reset_pass (user_id, token, expiration) VALUES ('{$id}', '{$token}', '{$expiration}')";
+  if ($db->query($query)) {
+  }
+}
+
+/*--------------------------------------------------------------*/
+/* Function buscar a que id esta asociado un token
+/*--------------------------------------------------------------*/
+
+function find_id_by_token($token)
+{
+  global $db;
+  $sql = $db->query("SELECT user_id FROM reset_pass WHERE token = '{$db->escape($token)}' LIMIT 1");
+
+  // Cambia fetch_assoc a fetch_all para obtener todos los resultados
+  $result = $sql->fetch_all(MYSQLI_ASSOC);
+
+  return $result;
+}
+
+/*--------------------------------------------------------------*/
+/* Function buscar que el token exista en la base de datos.
+/*--------------------------------------------------------------*/
+function find_token($token)
+{
+  global $db;
+  $sql = $db->query("SELECT token, user_id, expiration FROM reset_pass WHERE token = '{$db->escape($token)}' LIMIT 1");
+
+  if ($result = $db->fetch_assoc($sql))
+      return $result;
+    else
+      return null;
+
+  return $result;
+}
+/*--------------------------------------------------------------*/
+/* Function para elimiar los tokens usados y restablecer la contraseña
+/*--------------------------------------------------------------*/
+function change_password_with_token($id,$password)
+{
+  global $db;
+  $id = (int)$id;
+  $pass = sha1($password);
+  // Insertar un nuevo registro en la tabla reset_pass
+  $query1 = "UPDATE users SET password = '{$pass}' WHERE id = '{$id}'";
+  $db->query($query1);
+  $query2 = "DELETE FROM reset_pass WHERE user_id = '{$id}'";
+  $db->query($query2);
+}
+
+
+
+
+
 ?>
